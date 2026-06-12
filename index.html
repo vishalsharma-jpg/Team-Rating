@@ -3,91 +3,121 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Team Performance Rating Sheet</title>
+<title>Team Performance Rating — LIVE</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#f0f2f5;color:#333;min-height:100vh}
-.page-header{background:#1F3864;color:white;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
-.page-header h1{font-size:17px;font-weight:700;letter-spacing:0.3px}
+
+/* ── Setup banner ─────────────────────────────── */
+#setupBanner{background:#fff3cd;border-bottom:2px solid #F4B942;padding:14px 20px;display:flex;align-items:flex-start;gap:14px}
+#setupBanner.hidden{display:none}
+.setup-icon{font-size:22px;line-height:1}
+.setup-text h3{font-size:13px;font-weight:700;color:#856404;margin-bottom:4px}
+.setup-text p{font-size:12px;color:#6b5500;line-height:1.6}
+.setup-text code{background:#fef3cd;border:1px solid #f0c040;border-radius:3px;padding:1px 5px;font-size:11px;font-family:monospace}
+.setup-text a{color:#1F3864;font-weight:600}
+#dismissSetup{margin-left:auto;background:none;border:none;font-size:18px;cursor:pointer;color:#856404;padding:2px 6px}
+
+/* ── Header ───────────────────────────────────── */
+.page-header{background:#1F3864;color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.page-header h1{font-size:16px;font-weight:700}
 .page-header .sub{font-size:11px;opacity:0.75;margin-top:3px}
-.btn-row{display:flex;gap:8px;align-items:center}
-.btn{background:#F4B942;color:#1a1a1a;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px;transition:background 0.15s}
+.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{background:#F4B942;color:#1a1a1a;border:none;padding:7px 13px;border-radius:6px;cursor:pointer;font-weight:700;font-size:12px}
 .btn:hover{background:#e5a830}
-.btn-ghost{background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.3);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;transition:background 0.15s}
+.btn-ghost{background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.3);padding:6px 13px;border-radius:6px;cursor:pointer;font-size:12px}
 .btn-ghost:hover{background:rgba(255,255,255,0.22)}
 
-.score-legend{display:flex;gap:0;margin:14px 20px 0;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.12);width:fit-content}
-.legend-item{padding:7px 14px;font-size:12px;font-weight:600;text-align:center}
+/* Live dot */
+.live-badge{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#7defa0;padding:4px 10px;border:1px solid rgba(125,239,160,0.4);border-radius:20px;background:rgba(125,239,160,0.08)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#7defa0;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.85)}}
+.offline-badge{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#ff8a8a;padding:4px 10px;border:1px solid rgba(255,138,138,0.4);border-radius:20px}
+
+/* ── Legend ───────────────────────────────────── */
+.score-legend{display:flex;gap:0;margin:12px 20px 0;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.12);width:fit-content}
+.legend-item{padding:6px 13px;font-size:12px;font-weight:600}
 .l1{background:#c0392b;color:white}.l2{background:#e67e22;color:white}
 .l3{background:#f1c40f;color:#333}.l4{background:#27ae60;color:white}
 .l5{background:#1abc9c;color:white}
 
-.table-wrap{overflow-x:auto;margin:14px 14px 0;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+/* ── Table ────────────────────────────────────── */
+.table-wrap{overflow-x:auto;margin:12px 14px 0;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
 table{border-collapse:collapse;background:white;font-size:12px;width:max-content;min-width:100%}
-
-/* Header */
 thead th{background:#1F3864;color:white;padding:9px 8px;white-space:nowrap;font-size:11px;font-weight:600;border-right:1px solid rgba(255,255,255,0.12)}
 th.crit-th{text-align:left;position:sticky;left:0;z-index:12;background:#1F3864;min-width:210px;padding-left:14px}
 th.cat-th{background:#152a4a;font-size:10px;font-weight:500;min-width:95px;text-align:center}
-
-/* Rows */
 tr.section-row td{background:#dce6f1;color:#1F3864;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;padding:5px 14px;position:sticky;left:0}
 tr.data-row:nth-child(even) td{background:#f7f9fc}
 tr.data-row:nth-child(odd) td{background:#ffffff}
 tr.data-row:hover td{background:#eef4fb !important}
-
 td.crit-cell{position:sticky;left:0;z-index:6;border-right:2px solid #d0d8e4;padding:6px 10px 6px 14px;font-size:12px;white-space:nowrap;min-width:210px}
 tr.data-row:nth-child(even) td.crit-cell{background:#f7f9fc}
 tr.data-row:nth-child(odd) td.crit-cell{background:#ffffff}
 tr.data-row:hover td.crit-cell{background:#eef4fb !important}
-
 td.star-cell{text-align:center;padding:5px 6px;border-right:0.5px solid #e8ecf1;min-width:95px}
-
 .stars{display:inline-flex;gap:1px;cursor:pointer;line-height:1}
 .star{font-size:18px;color:#ddd;transition:color 0.08s,transform 0.08s;user-select:none;display:inline-block}
 .star.filled{color:#F4B942}
 .star:hover{transform:scale(1.15)}
 
-/* Total row */
-tfoot tr td{background:#1F3864;color:white;font-weight:700;text-align:center;padding:10px 6px;font-size:14px;border-right:1px solid rgba(255,255,255,0.12)}
+/* Flash animation when remote update arrives */
+@keyframes flash{0%{background:#fffbe6}100%{background:transparent}}
+.star-cell.updated{animation:flash 0.8s ease-out}
+
+/* Footer */
+tfoot tr td{background:#1F3864;color:white;font-weight:700;text-align:center;padding:9px 6px;font-size:14px;border-right:1px solid rgba(255,255,255,0.12)}
 tfoot tr td.total-lbl{text-align:left;padding-left:14px;font-size:12px;position:sticky;left:0;z-index:6}
 tfoot tr td.pct-cell{font-size:11px;font-weight:500;color:rgba(255,255,255,0.75)}
 
-/* Rankings */
-.rankings{padding:16px 20px 24px}
-.rankings h2{font-size:14px;font-weight:700;color:#1F3864;margin-bottom:12px}
+/* ── Rankings ─────────────────────────────────── */
+.rankings{padding:14px 20px 24px}
+.rankings h2{font-size:14px;font-weight:700;color:#1F3864;margin-bottom:10px}
 .rank-table{width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-.rank-table thead th{background:#1F3864;color:white;padding:10px 14px;font-size:11px;font-weight:600;text-align:left}
+.rank-table thead th{background:#1F3864;color:white;padding:9px 14px;font-size:11px;font-weight:600;text-align:left}
 .rank-table thead th.rc{text-align:center}
 .rank-table tbody tr{border-bottom:0.5px solid #e8ecf1;transition:background 0.1s}
 .rank-table tbody tr:hover{background:#eef4fb}
 .rank-table tbody tr:last-child{border-bottom:none}
-.rank-table td{padding:10px 14px;font-size:13px;vertical-align:middle}
+.rank-table td{padding:9px 14px;font-size:13px;vertical-align:middle}
 .rank-table td.rc{text-align:center}
-.rank-num{font-size:16px;font-weight:800;text-align:center;width:36px}
-.rank-num.g{color:#F4B942}.rank-num.s{color:#aaa}.rank-num.b{color:#cd7f32}.rank-num.n{color:#bbb}
+.rank-num{font-size:16px;font-weight:800;text-align:center}
 .medal{font-size:18px}
-.name-cell{font-weight:600;font-size:13px}
 .score-cell{font-weight:700;font-size:14px;color:#1F3864;text-align:center}
-.pct-badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;text-align:center}
+.pct-badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700}
 .pb-ex{background:#d5f5ec;color:#0f6e56}.pb-gd{background:#d5edda;color:#1e6b34}
 .pb-av{background:#fef9c3;color:#854d0e}.pb-bl{background:#ffe4cc;color:#9a3412}
 .pb-po{background:#fde8e8;color:#9b1c1c}
-.bar-wrap{width:140px;height:8px;background:#eee;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle}
-.bar-fill{height:8px;border-radius:4px;background:linear-gradient(90deg,#2E75B6,#1abc9c);transition:width 0.5s}
+.bar-wrap{width:130px;height:7px;background:#eee;border-radius:4px;overflow:hidden;display:inline-block;vertical-align:middle}
+.bar-fill{height:7px;border-radius:4px;background:linear-gradient(90deg,#2E75B6,#1abc9c);transition:width 0.5s}
 .rank-table tr.rank-1 td{background:#fffbea}
 .rank-table tr.rank-2 td{background:#fafafa}
 .rank-table tr.rank-3 td{background:#fdf6ee}
-
 .rec{font-size:9px;background:#FFF3CD;color:#856404;border-radius:3px;padding:1px 5px;margin-left:4px;font-weight:600;vertical-align:middle}
 </style>
 </head>
 <body>
 
+<!-- ── Setup Banner ──────────────────────────────────────────── -->
+<div id="setupBanner">
+  <div class="setup-icon">⚙️</div>
+  <div class="setup-text">
+    <h3>Firebase Setup Required — Replace the config below to enable live sync</h3>
+    <p>
+      1. Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → Create project → Add Web App → copy your config.<br>
+      2. In the HTML file, find <code>REPLACE_WITH_YOUR_*</code> and paste your values.<br>
+      3. In Firebase → Realtime Database → Rules, set both <code>.read</code> and <code>.write</code> to <code>true</code> → Publish.<br>
+      4. Host on <a href="https://app.netlify.com/drop" target="_blank">Netlify Drop</a> and share the URL.
+    </p>
+  </div>
+  <button id="dismissSetup" title="Dismiss">✕</button>
+</div>
+
+<!-- ── Header ────────────────────────────────────────────────── -->
 <div class="page-header">
   <div>
-    <h1>Team Performance Evaluation — 6D Technologies</h1>
-    <div class="sub">Click stars to rate (1–5) &nbsp;|&nbsp; ★ = Recommended criteria &nbsp;|&nbsp; Max: 85 pts per person &nbsp;|&nbsp; <span id="saveStatus" style="color:#F4B942">Ratings auto-saved in browser</span></div>
+    <h1>Team Performance Evaluation — 6D Technologies &nbsp;<span id="liveBadge" class="offline-badge">⬤ Connecting…</span></h1>
+    <div class="sub">Ratings sync live across all viewers &nbsp;|&nbsp; ★ = Recommended criteria &nbsp;|&nbsp; Max: 85 pts &nbsp;|&nbsp; <span id="saveStatus" style="color:#F4B942">Waiting for Firebase…</span></div>
   </div>
   <div class="btn-row">
     <button class="btn-ghost" onclick="resetAll()">↺ Reset All</button>
@@ -116,11 +146,11 @@ tfoot tr td.pct-cell{font-size:11px;font-weight:500;color:rgba(255,255,255,0.75)
   <table class="rank-table">
     <thead>
       <tr>
-        <th class="rc" style="width:48px">Rank</th>
+        <th class="rc" style="width:50px">Rank</th>
         <th>Name</th>
         <th class="rc" style="width:90px">Score / 85</th>
-        <th class="rc" style="width:90px">Rating</th>
-        <th style="width:160px">Progress</th>
+        <th class="rc" style="width:100px">Rating</th>
+        <th style="width:155px">Progress</th>
         <th class="rc" style="width:70px">Score %</th>
       </tr>
     </thead>
@@ -128,126 +158,140 @@ tfoot tr td.pct-cell{font-size:11px;font-weight:500;color:rgba(255,255,255,0.75)
   </table>
 </div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
+/* ── Firebase config — REPLACE ALL VALUES BELOW ── */
+const firebaseConfig = {
+  apiKey:            "AIzaSyBDKt1JyNJaJ3wOfKnQSu8ZGj9l5e1NHgo",
+  authDomain:        "team-rating-51864.firebaseapp.com",
+  databaseURL:       "https://team-rating-51864-default-rtdb.firebaseio.com",
+  projectId:         "team-rating-51864",
+  storageBucket:     "team-rating-51864.firebasestorage.app",
+  messagingSenderId: "335940865816",
+  appId:             "1:335940865816:web:dcdcfb36fdfe56b107d86d"
+  measurementId: 	 "G-4Y5SGEWJQT"
+};
+/* ─────────────────────────────────────────────── */
+
 const people = [
-  "Rameez K Rasack",
-  "Tejeswini K R",
-  "Shilpa R",
-  "Prakash S",
-  "Nuli Y N R Santosh Praveen",
-  "Shanmugasundaram Akshinathan",
-  "Daggu Durgaprasad",
-  "Shyam Mohan",
-  "Jibin Thomas",
-  "Madheri Manoj Kumar",
-  "Akshay Chatter",
-  "Keerthipriya S N",
-  "Subash P S",
-  "Chandramouli Voonna"
+  "Rameez K Rasack","Tejeswini K R","Shilpa R","Prakash S",
+  "Nuli Y N R Santosh Praveen","Shanmugasundaram Akshinathan",
+  "Daggu Durgaprasad","Shyam Mohan","Jibin Thomas",
+  "Madheri Manoj Kumar","Akshay Chatter","Keerthipriya S N",
+  "Subash P S","Chandramouli Voonna"
 ];
 
 const groups = [
   {section:"Core Skills", items:[
-    {name:"Technical Expertise",rec:false},
-    {name:"Domain Knowledge",rec:false},
-    {name:"Testing Skills",rec:false},
-    {name:"Problem Solving",rec:true},
+    {name:"Technical Expertise",rec:false},{name:"Domain Knowledge",rec:false},
+    {name:"Testing Skills",rec:false},{name:"Problem Solving",rec:true},
     {name:"Innovation & Creativity",rec:true}
   ]},
   {section:"Soft Skills", items:[
-    {name:"Client Handling",rec:false},
-    {name:"Communications",rec:false},
-    {name:"Behaviour",rec:false},
-    {name:"Adaptability / Flexibility",rec:true}
+    {name:"Client Handling",rec:false},{name:"Communications",rec:false},
+    {name:"Behaviour",rec:false},{name:"Adaptability / Flexibility",rec:true}
   ]},
   {section:"Collaboration", items:[
-    {name:"Team Coordination",rec:false},
-    {name:"Leadership Ability",rec:false},
+    {name:"Team Coordination",rec:false},{name:"Leadership Ability",rec:false},
     {name:"Support",rec:false}
   ]},
   {section:"Reliability", items:[
     {name:"Availability (WFH / Office)",rec:false},
-    {name:"Deadline Adherence",rec:true},
-    {name:"Ownership & Accountability",rec:true}
+    {name:"Deadline Adherence",rec:true},{name:"Ownership & Accountability",rec:true}
   ]},
   {section:"Growth", items:[
-    {name:"Work Initiator",rec:false},
-    {name:"Learning / Grasping Skills",rec:false}
+    {name:"Work Initiator",rec:false},{name:"Learning / Grasping Skills",rec:false}
   ]}
 ];
 
-// Flatten
 const criteria = [];
 groups.forEach(g => g.items.forEach(item => criteria.push({...item, section:g.section})));
-const N = criteria.length; // 17
-const P = people.length;   // 14
-const MAX = N * 5;         // 85
-
-// Storage
-const STORAGE_KEY = 'teamRatings_6D_v1';
+const N = criteria.length, P = people.length, MAX = N * 5;
 const ratings = Array.from({length:P}, () => new Array(N).fill(0));
 
-function saveToStorage() {
+/* ── Firebase init ────────────────────────────── */
+let db, ratingsRef, firebaseReady = false;
+const isConfigured = !firebaseConfig.apiKey.includes('REPLACE');
+
+if (isConfigured) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      ratings,
-      savedAt: new Date().toISOString()
-    }));
-    const el = document.getElementById('saveStatus');
-    if (el) {
-      const t = new Date().toLocaleTimeString();
-      el.textContent = '✓ Saved at ' + t;
-      el.style.color = '#7defa0';
-      setTimeout(() => { el.textContent = 'Auto-saved ✓'; el.style.color = '#F4B942'; }, 2500);
-    }
-  } catch(e) {}
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    ratingsRef = db.ref('teamRatings_6D');
+
+    // Connection state
+    firebase.database().ref('.info/connected').on('value', snap => {
+      const connected = snap.val();
+      const badge = document.getElementById('liveBadge');
+      if (connected) {
+        badge.className = 'live-badge';
+        badge.innerHTML = '<span class="live-dot"></span> LIVE';
+        setStatus('Connected — ratings sync in real time', '#7defa0');
+      } else {
+        badge.className = 'offline-badge';
+        badge.innerHTML = '⬤ Reconnecting…';
+        setStatus('Reconnecting…', '#ff8a8a');
+      }
+    });
+
+    // Real-time listener — fires for every remote change
+    ratingsRef.on('value', snapshot => {
+      const data = snapshot.val() || {};
+      let changed = false;
+      for (let pi = 0; pi < P; pi++) {
+        for (let ci = 0; ci < N; ci++) {
+          const remote = (data[pi] && data[pi][ci] != null) ? data[pi][ci] : 0;
+          if (remote !== ratings[pi][ci]) {
+            ratings[pi][ci] = remote;
+            renderStars(pi, ci);
+            flashCell(pi, ci);
+            changed = true;
+          }
+        }
+        updateTotals(pi);
+      }
+      if (changed) updateRankings();
+      firebaseReady = true;
+    });
+  } catch(e) {
+    setStatus('Firebase error: ' + e.message, '#ff8a8a');
+  }
+} else {
+  setStatus('⚠ Firebase not configured — ratings save locally only', '#F4B942');
+  document.getElementById('liveBadge').innerHTML = '⬤ Offline mode';
 }
 
-function loadFromStorage() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    if (!data.ratings) return;
-    data.ratings.forEach((personRatings, pi) => {
-      if (!personRatings) return;
-      personRatings.forEach((val, ci) => {
-        if (pi < P && ci < N && val >= 0 && val <= 5) {
-          ratings[pi][ci] = val;
-          renderStars(pi, ci);
-        }
-      });
-      updateTotals(pi);
-    });
-    updateRankings();
-    const el = document.getElementById('saveStatus');
-    if (el && data.savedAt) {
-      const d = new Date(data.savedAt);
-      el.textContent = '✓ Restored from ' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
-      el.style.color = '#7defa0';
-      setTimeout(() => { el.textContent = 'Auto-saved ✓'; el.style.color = '#F4B942'; }, 3500);
-    }
-  } catch(e) {}
+/* ── Helpers ──────────────────────────────────── */
+function setStatus(msg, color) {
+  const el = document.getElementById('saveStatus');
+  if (el) { el.textContent = msg; el.style.color = color || '#F4B942'; }
 }
 
 function shortName(name) {
-  const parts = name.split(' ');
-  return parts.length <= 2 ? name : parts[0] + ' ' + parts[parts.length-1];
+  const p = name.split(' ');
+  return p.length <= 2 ? name : p[0] + ' ' + p[p.length-1];
 }
 
+function flashCell(pi, ci) {
+  const el = document.getElementById(`sc-${pi}-${ci}`);
+  if (!el) return;
+  el.classList.remove('updated');
+  void el.offsetWidth;
+  el.classList.add('updated');
+}
+
+/* ── Build table ──────────────────────────────── */
 function buildTable() {
-  // Header
   let h = '<tr><th class="crit-th">Criteria</th>';
-  people.forEach((p, pi) => {
-    h += `<th class="cat-th" title="${p}">${shortName(p)}</th>`;
-  });
+  people.forEach(p => { h += `<th class="cat-th" title="${p}">${shortName(p)}</th>`; });
   h += '</tr>';
   document.getElementById('tHead').innerHTML = h;
 
-  // Body
-  let b = '';
-  let ci = 0;
+  let b = '', ci = 0;
   groups.forEach(g => {
     b += `<tr class="section-row"><td colspan="${P+1}">${g.section}</td></tr>`;
     g.items.forEach(item => {
@@ -255,8 +299,7 @@ function buildTable() {
       const lbl = item.rec ? `${item.name} <span class="rec">★ New</span>` : item.name;
       b += `<tr class="data-row"><td class="crit-cell">${lbl}</td>`;
       people.forEach((_, pi) => {
-        b += `<td class="star-cell" id="sc-${pi}-${idx}">`;
-        b += `<div class="stars" onmouseleave="unhover(${pi},${idx})">`;
+        b += `<td class="star-cell" id="sc-${pi}-${idx}"><div class="stars" onmouseleave="unhover(${pi},${idx})">`;
         for (let s=1; s<=5; s++) {
           b += `<span class="star" id="st-${pi}-${idx}-${s}" onclick="rate(${pi},${idx},${s})" onmouseenter="hover(${pi},${idx},${s})">☆</span>`;
         }
@@ -268,30 +311,31 @@ function buildTable() {
   });
   document.getElementById('tBody').innerHTML = b;
 
-  // Footer
-  let f = '<tr>';
-  f += `<td class="total-lbl">Total Score (/ ${MAX})</td>`;
-  people.forEach((_, pi) => {
-    f += `<td id="tot-${pi}">0</td>`;
-  });
-  f += '</tr>';
-  f += '<tr>';
-  f += `<td class="total-lbl pct-cell" style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.75)">Score %</td>`;
-  people.forEach((_, pi) => {
-    f += `<td class="pct-cell" id="pct-${pi}">0%</td>`;
-  });
+  let f = `<tr><td class="total-lbl">Total Score (/ ${MAX})</td>`;
+  people.forEach((_, pi) => { f += `<td id="tot-${pi}">0</td>`; });
+  f += `</tr><tr><td class="total-lbl pct-cell" style="font-size:11px;font-weight:500;color:rgba(255,255,255,0.75)">Score %</td>`;
+  people.forEach((_, pi) => { f += `<td class="pct-cell" id="pct-${pi}">0%</td>`; });
   f += '</tr>';
   document.getElementById('tFoot').innerHTML = f;
-
   updateRankings();
 }
 
+/* ── Star interactions ────────────────────────── */
 function rate(pi, ci, val) {
   ratings[pi][ci] = val;
   renderStars(pi, ci);
   updateTotals(pi);
   updateRankings();
-  saveToStorage();
+
+  if (isConfigured && db) {
+    db.ref(`teamRatings_6D/${pi}/${ci}`).set(val)
+      .then(() => { setStatus('✓ Saved & synced at ' + new Date().toLocaleTimeString(), '#7defa0'); setTimeout(()=>setStatus('Connected — ratings sync in real time','#7defa0'),3000); })
+      .catch(e => { setStatus('Save failed: ' + e.message, '#ff8a8a'); });
+  } else {
+    // Fallback: localStorage
+    try { localStorage.setItem('teamRatings_6D_v1', JSON.stringify({ratings, savedAt: new Date().toISOString()})); } catch(e){}
+    setStatus('✓ Saved locally at ' + new Date().toLocaleTimeString(), '#F4B942');
+  }
 }
 
 function renderStars(pi, ci) {
@@ -315,42 +359,37 @@ function unhover(pi, ci) { renderStars(pi, ci); }
 
 function updateTotals(pi) {
   const total = ratings[pi].reduce((a,b)=>a+b, 0);
-  const pct = Math.round((total/MAX)*100);
+  const pct   = Math.round((total/MAX)*100);
   const te = document.getElementById(`tot-${pi}`);
   const pe = document.getElementById(`pct-${pi}`);
   if (te) te.textContent = total;
   if (pe) pe.textContent = pct + '%';
 }
 
+/* ── Rankings ─────────────────────────────────── */
 function getRatingLabel(pct) {
-  if (pct >= 80) return ['Excellent', 'pb-ex'];
-  if (pct >= 60) return ['Good',      'pb-gd'];
-  if (pct >= 40) return ['Average',   'pb-av'];
-  if (pct >= 20) return ['Below Avg', 'pb-bl'];
-  return ['Poor', 'pb-po'];
+  if (pct >= 80) return ['Excellent','pb-ex'];
+  if (pct >= 60) return ['Good','pb-gd'];
+  if (pct >= 40) return ['Average','pb-av'];
+  if (pct >= 20) return ['Below Avg','pb-bl'];
+  return ['Poor','pb-po'];
 }
 
 function updateRankings() {
-  const list = people.map((p, pi) => ({
-    name: p,
-    score: ratings[pi].reduce((a,b)=>a+b, 0),
-    pi
-  })).sort((a,b) => b.score - a.score);
+  const list = people.map((p,pi) => ({name:p, score:ratings[pi].reduce((a,b)=>a+b,0), pi}))
+    .sort((a,b) => b.score - a.score);
 
-  const medals  = ['🥇','🥈','🥉'];
-  const numCls  = ['g','s','b'];
-  const rowCls  = ['rank-1','rank-2','rank-3'];
+  const medals = ['🥇','🥈','🥉'];
+  const rowCls = ['rank-1','rank-2','rank-3'];
 
-  document.getElementById('rankGrid').innerHTML = list.map((t, i) => {
-    const pct = Math.round((t.score / MAX) * 100);
-    const [label, badgeCls] = getRatingLabel(pct);
-    const rc  = i < 3 ? rowCls[i] : '';
-    const num = i < 3
-      ? `<span class="medal">${medals[i]}</span>`
-      : `<span class="rank-num n">${i+1}</span>`;
+  document.getElementById('rankGrid').innerHTML = list.map((t,i) => {
+    const pct = Math.round((t.score/MAX)*100);
+    const [label,badgeCls] = getRatingLabel(pct);
+    const rc = i < 3 ? rowCls[i] : '';
+    const num = i < 3 ? `<span class="medal">${medals[i]}</span>` : `<span class="rank-num" style="color:#bbb">${i+1}</span>`;
     return `<tr class="${rc}">
       <td class="rc">${num}</td>
-      <td class="name-cell">${t.name}</td>
+      <td style="font-weight:600">${t.name}</td>
       <td class="score-cell">${t.score}</td>
       <td class="rc"><span class="pct-badge ${badgeCls}">${label}</span></td>
       <td><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div></td>
@@ -359,68 +398,73 @@ function updateRankings() {
   }).join('');
 }
 
+/* ── Reset ────────────────────────────────────── */
 function resetAll() {
-  if (!confirm('Reset all ratings? This will also clear the saved data in your browser.')) return;
+  if (!confirm('Reset ALL ratings for everyone? This clears Firebase data for all viewers.')) return;
   for (let pi=0; pi<P; pi++) {
-    for (let ci=0; ci<N; ci++) {
-      ratings[pi][ci] = 0;
-      renderStars(pi, ci);
-    }
+    for (let ci=0; ci<N; ci++) { ratings[pi][ci] = 0; renderStars(pi,ci); }
     updateTotals(pi);
   }
   updateRankings();
-  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
-  const el = document.getElementById('saveStatus');
-  if (el) { el.textContent = 'Ratings cleared'; el.style.color = '#ff8a8a'; }
+  if (isConfigured && db) {
+    db.ref('teamRatings_6D').remove();
+  } else {
+    try { localStorage.removeItem('teamRatings_6D_v1'); } catch(e){}
+  }
+  setStatus('All ratings cleared', '#ff8a8a');
 }
 
+/* ── Export ───────────────────────────────────── */
 function exportExcel() {
   const wb = XLSX.utils.book_new();
-
-  // Sheet 1: Ratings
-  const rows = [];
-  rows.push(['Category', 'Criteria', ...people]);
+  const rows = [['Category','Criteria',...people]];
   let ci = 0;
   groups.forEach(g => {
     g.items.forEach(item => {
-      rows.push([
-        g.section,
-        item.name + (item.rec ? ' ★' : ''),
-        ...people.map((_, pi) => ratings[pi][ci] || 0)
-      ]);
+      rows.push([g.section, item.name+(item.rec?' ★':''), ...people.map((_,pi)=>ratings[pi][ci]||0)]);
       ci++;
     });
   });
-  // Blank row
   rows.push([]);
-  // Totals
-  rows.push(['', 'TOTAL SCORE', ...people.map((_, pi) => ratings[pi].reduce((a,b)=>a+b,0))]);
-  rows.push(['', 'Max Possible', ...people.map(() => MAX)]);
-  rows.push(['', 'Score %', ...people.map((_, pi) => {
-    const s = ratings[pi].reduce((a,b)=>a+b,0);
-    return (Math.round((s/MAX)*100)) + '%';
-  })]);
-
+  rows.push(['','TOTAL SCORE',...people.map((_,pi)=>ratings[pi].reduce((a,b)=>a+b,0))]);
+  rows.push(['','Max Possible',...people.map(()=>MAX)]);
+  rows.push(['','Score %',...people.map((_,pi)=>{const s=ratings[pi].reduce((a,b)=>a+b,0);return Math.round((s/MAX)*100)+'%';})]);
   const ws1 = XLSX.utils.aoa_to_sheet(rows);
   ws1['!cols'] = [{wch:16},{wch:26},...people.map(()=>({wch:22}))];
   XLSX.utils.book_append_sheet(wb, ws1, 'Team Ratings');
 
-  // Sheet 2: Rankings
   const rankRows = [['Rank','Name','Total Score','Max Score','Score %']];
-  people.map((p, pi) => ({name:p, score:ratings[pi].reduce((a,b)=>a+b,0)}))
+  people.map((p,pi)=>({name:p,score:ratings[pi].reduce((a,b)=>a+b,0)}))
     .sort((a,b)=>b.score-a.score)
-    .forEach((t,i) => {
-      rankRows.push([i+1, t.name, t.score, MAX, Math.round((t.score/MAX)*100)+'%']);
-    });
+    .forEach((t,i)=>{ rankRows.push([i+1,t.name,t.score,MAX,Math.round((t.score/MAX)*100)+'%']); });
   const ws2 = XLSX.utils.aoa_to_sheet(rankRows);
   ws2['!cols'] = [{wch:6},{wch:32},{wch:14},{wch:12},{wch:10}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Rankings');
-
-  XLSX.writeFile(wb, 'Team_Performance_Rating.xlsx');
+  XLSX.writeFile(wb, 'Team_Performance_Rating_LIVE.xlsx');
 }
 
+/* ── Init ─────────────────────────────────────── */
+document.getElementById('dismissSetup').onclick = () => {
+  document.getElementById('setupBanner').classList.add('hidden');
+};
 buildTable();
-loadFromStorage();
+// Fallback: load from localStorage if Firebase not configured
+if (!isConfigured) {
+  try {
+    const raw = localStorage.getItem('teamRatings_6D_v1');
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data.ratings) {
+        data.ratings.forEach((pr,pi) => {
+          if (!pr) return;
+          pr.forEach((val,ci) => { if(pi<P&&ci<N&&val>=0&&val<=5){ratings[pi][ci]=val;renderStars(pi,ci);} });
+          updateTotals(pi);
+        });
+        updateRankings();
+      }
+    }
+  } catch(e){}
+}
 </script>
 </body>
 </html>
