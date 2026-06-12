@@ -226,7 +226,7 @@ tfoot tr td.pct-cell{font-size:11px;font-weight:500;color:rgba(255,255,255,0.75)
     <div class="btn-row">
       <button class="btn-ghost" id="adminPanelBtn" style="display:none" onclick="openAdmin()">⚙️ Admin Panel</button>
       <button class="btn-ghost" onclick="logout()">Logout</button>
-      <button class="btn" onclick="exportExcel()">⬇ Download Excel</button>
+      <button class="btn" id="exportBtn" onclick="exportExcel()">⬇ Download Excel</button>
     </div>
   </div>
 
@@ -279,11 +279,11 @@ const ADMIN_PASSWORD = "6DAdmin2024";
 /* ────────────────────────────────────── */
 
 const people = [
-  "Rameez K Rasack","Tejeswini K R","Shilpa R","Prakash S",
-  "Nuli Y N R Santosh Praveen","Shanmugasundaram Akshinathan",
-  "Daggu Durgaprasad","Shyam Mohan","Jibin Thomas",
+  "Shilpa R","Pratik","Prakash S","Shyam Mohan","Jibin Thomas",
   "Madheri Manoj Kumar","Akshay Chatter","Keerthipriya S N",
-  "Subash P S","Chandramouli Voonna"
+  "Subash P S","Chandramouli Voonna","Vinay Kumar","Abha",
+  "Nuli Y N R Santosh Praveen","Shanmugasundaram Akshinathan",
+  "Daggu Durgaprasad","Rameez K Rasack","Tejeswini K R"
 ];
 
 const groups = [
@@ -387,6 +387,8 @@ function startSession(){
   document.getElementById('mainContent').classList.remove('hidden');
   document.getElementById('adminBadge').style.display = session.isAdmin ? 'inline-flex' : 'none';
   document.getElementById('adminPanelBtn').style.display = session.isAdmin ? 'inline-block' : 'none';
+  const exportBtn = document.getElementById('exportBtn');
+  if (exportBtn) exportBtn.textContent = session.isAdmin ? '⬇ Full Report (Excel)' : '⬇ Download Excel';
   if (session.isAdmin) {
     setSubtitle(`Admin view — all ${P} people shown | Max: 85 pts`);
   } else {
@@ -508,11 +510,12 @@ function buildTable(){
 /* ── Star interactions ───────────────── */
 function rate(pi, ci, val){
   if (session.isAdmin) return;
-  myRatings[pi][ci] = val;
+  const newVal = myRatings[pi][ci] === val ? 0 : val; // click same star = reset to 0
+  myRatings[pi][ci] = newVal;
   renderStars(pi, ci);
   updateTotals(pi);
   updateRankings();
-  ratingsRef.child(`${session.key}/${pi}/${ci}`).set(val);
+  ratingsRef.child(`${session.key}/${pi}/${ci}`).set(newVal);
 }
 
 function renderStars(pi, ci){
@@ -692,24 +695,77 @@ function renderRaterView(){
     );
   }
 
-  // Show as mini table: criteria rows × people columns (only rated people for that rater)
   const rater = (adminConfig.raters||{})[key];
   const cols = key==='__avg__' ? [...Array(P).keys()] :
     Object.keys((rater?.canRate)||{}).map(Number).sort((a,b)=>a-b);
 
   if (!cols.length){ container.innerHTML='<p style="color:#aaa;font-size:12px;padding:12px 0">No people assigned.</p>'; return; }
 
-  let t = `<table class="mini-table"><thead><tr><th>Criteria</th>${cols.map(i=>`<th>${shortName(people[i])}</th>`).join('')}</tr></thead><tbody>`;
+  // Build detailed table with group headers and color-coded scores
+  let t = `<div style="overflow-x:auto"><table class="mini-table" style="min-width:500px">
+    <thead><tr>
+      <th style="min-width:100px">Group</th>
+      <th style="min-width:180px">Criteria</th>
+      ${cols.map(i=>`<th style="min-width:90px">${shortName(people[i])}</th>`).join('')}
+    </tr></thead><tbody>`;
+
   let ci=0;
   groups.forEach(g => {
-    g.items.forEach(item => {
-      t += `<tr><td>${item.name}</td>${cols.map(pi=>{const v=scores[pi][ci];return `<td class="star-val${v?'':' zero'}">${v||'—'}</td>`;}).join('')}</tr>`;
+    const gStart = ci;
+    g.items.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      t += `<tr>`;
+      if (isFirst) t += `<td rowspan="${g.items.length}" style="background:#e8edf5;font-weight:700;font-size:11px;text-align:center;vertical-align:middle;border-right:2px solid #b8c8e0">${g.section}</td>`;
+      t += `<td>${item.name}${item.rec?' <span style="color:#F4B942">★</span>':''}</td>`;
+      cols.forEach(pi => {
+        const v = scores[pi][ci];
+        const fv = typeof v === 'number' && v % 1 !== 0 ? v.toFixed(1) : v;
+        const bg = v >= 4 ? '#d4edda' : v >= 3 ? '#fff3cd' : v > 0 ? '#fde2cc' : '';
+        t += `<td class="star-val${v?'':' zero'}" style="${bg?`background:${bg}`:''}">${v ? fv : '—'}</td>`;
+      });
+      t += `</tr>`;
       ci++;
     });
   });
-  const totals = cols.map(pi=>scores[pi].reduce((a,b)=>a+b,0));
-  t += `<tr style="background:#dce6f1;font-weight:700"><td>Total</td>${totals.map(s=>`<td style="color:#1F3864">${typeof s==='number'&&s%1!==0?s.toFixed(1):s}</td>`).join('')}</tr>`;
-  t += '</tbody></table>';
+
+  const totals = cols.map(pi => scores[pi].reduce((a,b)=>a+b,0));
+  const pcts   = totals.map(s => Math.round((s/MAX)*100));
+  t += `<tr style="background:#dce6f1;font-weight:700">
+    <td colspan="2" style="text-align:right;padding-right:8px">Total (max ${MAX})</td>
+    ${totals.map((s,i)=>{
+      const pct = pcts[i];
+      const clr = pct>=80?'#1a7a3c':pct>=60?'#856404':pct>=40?'#7a4b00':'#721c24';
+      return `<td style="color:${clr}">${typeof s==='number'&&s%1!==0?s.toFixed(1):s}</td>`;
+    }).join('')}
+  </tr>`;
+  t += `<tr style="background:#c9d9ed;font-weight:700">
+    <td colspan="2" style="text-align:right;padding-right:8px">Score %</td>
+    ${pcts.map(p=>{
+      const clr = p>=80?'#1a7a3c':p>=60?'#856404':p>=40?'#7a4b00':'#721c24';
+      return `<td style="color:${clr}">${p}%</td>`;
+    }).join('')}
+  </tr>`;
+  t += '</tbody></table></div>';
+
+  // Add per-person summary cards below
+  const label = key==='__avg__' ? 'Aggregated Average' : (rater?.name || key);
+  t = `<div style="margin-bottom:12px;font-weight:700;font-size:14px;color:#1F3864">📋 ${label} — Detailed Breakdown</div>` + t;
+
+  // Per-person mini summary
+  t += `<div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px">`;
+  cols.forEach((pi, idx) => {
+    const s = totals[idx];
+    const pct = pcts[idx];
+    const clr = pct>=80?'#1a7a3c':pct>=60?'#856404':pct>=40?'#7a4b00':'#721c24';
+    const bg  = pct>=80?'#d4edda':pct>=60?'#fff3cd':pct>=40?'#fde2cc':'#f8d7da';
+    t += `<div style="background:${bg};border-radius:8px;padding:10px 14px;min-width:120px;text-align:center">
+      <div style="font-size:11px;color:#555;margin-bottom:4px">${shortName(people[pi])}</div>
+      <div style="font-size:20px;font-weight:800;color:${clr}">${typeof s==='number'&&s%1!==0?s.toFixed(1):s}</div>
+      <div style="font-size:11px;color:${clr}">${pct}%</div>
+    </div>`;
+  });
+  t += `</div>`;
+
   container.innerHTML = t;
 }
 
@@ -717,22 +773,98 @@ function renderRaterView(){
 function exportExcel(){
   const wb = XLSX.utils.book_new();
   const cols = visibleCols();
-  const header = ['Category','Criteria',...cols.map(i=>people[i])];
-  const rows = [header];
-  let ci=0;
-  groups.forEach(g=>{
-    g.items.forEach(item=>{
-      rows.push([g.section, item.name+(item.rec?' ★':''), ...cols.map(pi=>myRatings[pi][ci]||0)]);
-      ci++;
+
+  if (session && session.isAdmin) {
+    // ── Sheet 1: Summary (all raters' totals side by side) ──────────────
+    const raters = adminConfig.raters || {};
+    const raterKeys = Object.keys(raters);
+    const summaryHeader = ['Person', 'Max Score', ...raterKeys.map(k=>raters[k].name), 'Avg Score', 'Avg %'];
+    const summaryRows = [summaryHeader];
+    people.forEach((person, pi) => {
+      const raterScores = raterKeys.map(k => {
+        const raw = allRatings[k] || {};
+        const assigned = raters[k].canRate || {};
+        if (!assigned[pi]) return 'N/A';
+        return Object.values(raw[pi]||{}).reduce((a,b)=>a+b,0);
+      });
+      const numericScores = raterScores.filter(v=>v!=='N/A');
+      const avg = numericScores.length ? (numericScores.reduce((a,b)=>a+b,0)/numericScores.length) : 0;
+      const pct = Math.round((avg/MAX)*100) + '%';
+      summaryRows.push([person, MAX, ...raterScores, avg%1!==0?avg.toFixed(1):avg, pct]);
     });
-  });
-  rows.push([]);
-  rows.push(['','TOTAL',...cols.map(pi=>myRatings[pi].reduce((a,b)=>a+b,0))]);
-  rows.push(['','Score %',...cols.map(pi=>{const s=myRatings[pi].reduce((a,b)=>a+b,0);return Math.round((s/MAX)*100)+'%';})]);
-  const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:14},{wch:26},...cols.map(()=>({wch:20}))];
-  XLSX.utils.book_append_sheet(wb,ws,'Ratings');
-  XLSX.writeFile(wb,'Team_Performance_Rating.xlsx');
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [{wch:30},{wch:12},...raterKeys.map(()=>({wch:20})),{wch:12},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+    // ── Sheet 2: Aggregated Average ──────────────────────────────────────
+    const avgHeader = ['Category','Criteria',...people.map(p=>p)];
+    const avgRows = [avgHeader];
+    let ci=0;
+    groups.forEach(g=>{
+      g.items.forEach(item=>{
+        avgRows.push([g.section, item.name+(item.rec?' ★':''), ...people.map((_,pi)=>{
+          const v=myRatings[pi][ci];
+          return v%1!==0?parseFloat(v.toFixed(1)):v;
+        })]);
+        ci++;
+      });
+    });
+    avgRows.push([]);
+    avgRows.push(['','TOTAL',...people.map(pi=>{ const s=myRatings[pi].reduce((a,b)=>a+b,0); return s%1!==0?parseFloat(s.toFixed(1)):s; })]);
+    avgRows.push(['','Score %',...people.map(pi=>{ const s=myRatings[pi].reduce((a,b)=>a+b,0); return Math.round((s/MAX)*100)+'%'; })]);
+    const wsAvg = XLSX.utils.aoa_to_sheet(avgRows);
+    wsAvg['!cols'] = [{wch:14},{wch:26},...people.map(()=>({wch:20}))];
+    XLSX.utils.book_append_sheet(wb, wsAvg, 'Aggregated Average');
+
+    // ── Sheet per rater ──────────────────────────────────────────────────
+    raterKeys.forEach(k => {
+      const rater = raters[k];
+      const raw = allRatings[k] || {};
+      const raterCols = Object.keys(rater.canRate||{}).map(Number).sort((a,b)=>a-b);
+      if (!raterCols.length) return;
+
+      const scores = Array.from({length:P}, (_,pi) =>
+        Array.from({length:N}, (_,ci) => (raw[pi]&&raw[pi][ci]) ? raw[pi][ci] : 0)
+      );
+      const header = ['Category','Criteria',...raterCols.map(i=>people[i])];
+      const rows = [header];
+      let ci2=0;
+      groups.forEach(g=>{
+        g.items.forEach(item=>{
+          rows.push([g.section, item.name+(item.rec?' ★':''), ...raterCols.map(pi=>scores[pi][ci2]||0)]);
+          ci2++;
+        });
+      });
+      rows.push([]);
+      rows.push(['','TOTAL',...raterCols.map(pi=>scores[pi].reduce((a,b)=>a+b,0))]);
+      rows.push(['','Score %',...raterCols.map(pi=>{const s=scores[pi].reduce((a,b)=>a+b,0);return Math.round((s/MAX)*100)+'%';})]);
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{wch:14},{wch:26},...raterCols.map(()=>({wch:20}))];
+      // Sheet name max 31 chars, strip invalid chars
+      const sheetName = rater.name.replace(/[:\\/?*\[\]]/g,'').substring(0,31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+
+    XLSX.writeFile(wb, 'Team_Performance_Full_Report.xlsx');
+  } else {
+    // Rater export (current view only)
+    const header = ['Category','Criteria',...cols.map(i=>people[i])];
+    const rows = [header];
+    let ci=0;
+    groups.forEach(g=>{
+      g.items.forEach(item=>{
+        rows.push([g.section, item.name+(item.rec?' ★':''), ...cols.map(pi=>myRatings[pi][ci]||0)]);
+        ci++;
+      });
+    });
+    rows.push([]);
+    rows.push(['','TOTAL',...cols.map(pi=>myRatings[pi].reduce((a,b)=>a+b,0))]);
+    rows.push(['','Score %',...cols.map(pi=>{const s=myRatings[pi].reduce((a,b)=>a+b,0);return Math.round((s/MAX)*100)+'%';})]);
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:14},{wch:26},...cols.map(()=>({wch:20}))];
+    XLSX.utils.book_append_sheet(wb,ws,'My Ratings');
+    XLSX.writeFile(wb,'Team_Performance_Rating.xlsx');
+  }
 }
 
 /* ── Init ───────────────────────────── */
