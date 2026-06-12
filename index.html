@@ -116,7 +116,7 @@ tfoot tr td.pct-cell{font-size:11px;font-weight:500;color:rgba(255,255,255,0.75)
 <!-- ── Header ────────────────────────────────────────────────── -->
 <div class="page-header">
   <div>
-    <h1>Team Performance Evaluation — 6D Technologies &nbsp;<span id="liveBadge" class="offline-badge">⬤ Connecting…</span></h1>
+    <h1>Team Performance Evaluation — 6D Technologies &nbsp;<span id="liveBadge" class="offline-badge">⬤ Offline</span></h1>
     <div class="sub">Ratings sync live across all viewers &nbsp;|&nbsp; ★ = Recommended criteria &nbsp;|&nbsp; Max: 85 pts &nbsp;|&nbsp; <span id="saveStatus" style="color:#F4B942">Waiting for Firebase…</span></div>
   </div>
   <div class="btn-row">
@@ -213,57 +213,9 @@ groups.forEach(g => g.items.forEach(item => criteria.push({...item, section:g.se
 const N = criteria.length, P = people.length, MAX = N * 5;
 const ratings = Array.from({length:P}, () => new Array(N).fill(0));
 
-/* ── Firebase init ────────────────────────────── */
-let db, ratingsRef, firebaseReady = false;
+/* ── Firebase state (initialised in Init block below) ── */
+let db, ratingsRef;
 const isConfigured = !firebaseConfig.apiKey.includes('REPLACE');
-
-if (isConfigured) {
-  try {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-    ratingsRef = db.ref('teamRatings_6D');
-
-    // Connection state
-    firebase.database().ref('.info/connected').on('value', snap => {
-      const connected = snap.val();
-      const badge = document.getElementById('liveBadge');
-      if (connected) {
-        badge.className = 'live-badge';
-        badge.innerHTML = '<span class="live-dot"></span> LIVE';
-        setStatus('Connected — ratings sync in real time', '#7defa0');
-      } else {
-        badge.className = 'offline-badge';
-        badge.innerHTML = '⬤ Reconnecting…';
-        setStatus('Reconnecting…', '#ff8a8a');
-      }
-    });
-
-    // Real-time listener — fires for every remote change
-    ratingsRef.on('value', snapshot => {
-      const data = snapshot.val() || {};
-      let changed = false;
-      for (let pi = 0; pi < P; pi++) {
-        for (let ci = 0; ci < N; ci++) {
-          const remote = (data[pi] && data[pi][ci] != null) ? data[pi][ci] : 0;
-          if (remote !== ratings[pi][ci]) {
-            ratings[pi][ci] = remote;
-            renderStars(pi, ci);
-            flashCell(pi, ci);
-            changed = true;
-          }
-        }
-        updateTotals(pi);
-      }
-      if (changed) updateRankings();
-      firebaseReady = true;
-    });
-  } catch(e) {
-    setStatus('Firebase error: ' + e.message, '#ff8a8a');
-  }
-} else {
-  setStatus('⚠ Firebase not configured — ratings save locally only', '#F4B942');
-  document.getElementById('liveBadge').innerHTML = '⬤ Offline mode';
-}
 
 /* ── Helpers ──────────────────────────────────── */
 function setStatus(msg, color) {
@@ -447,23 +399,72 @@ function exportExcel() {
 document.getElementById('dismissSetup').onclick = () => {
   document.getElementById('setupBanner').classList.add('hidden');
 };
+
+// 1. Build table FIRST — always, regardless of Firebase
 buildTable();
-// Fallback: load from localStorage if Firebase not configured
-if (!isConfigured) {
-  try {
-    const raw = localStorage.getItem('teamRatings_6D_v1');
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (data.ratings) {
-        data.ratings.forEach((pr,pi) => {
-          if (!pr) return;
-          pr.forEach((val,ci) => { if(pi<P&&ci<N&&val>=0&&val<=5){ratings[pi][ci]=val;renderStars(pi,ci);} });
-          updateTotals(pi);
-        });
-        updateRankings();
-      }
+
+// 2. Load from localStorage (offline fallback)
+try {
+  const raw = localStorage.getItem('teamRatings_6D_v1');
+  if (raw) {
+    const data = JSON.parse(raw);
+    if (data.ratings) {
+      data.ratings.forEach((pr,pi) => {
+        if (!pr) return;
+        pr.forEach((val,ci) => { if(pi<P&&ci<N&&val>=0&&val<=5){ratings[pi][ci]=val;renderStars(pi,ci);} });
+        updateTotals(pi);
+      });
+      updateRankings();
     }
-  } catch(e){}
+  }
+} catch(e){}
+
+// 3. Connect Firebase AFTER table is ready
+if (isConfigured) {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    ratingsRef = db.ref('teamRatings_6D');
+
+    firebase.database().ref('.info/connected').on('value', snap => {
+      const badge = document.getElementById('liveBadge');
+      if (snap.val()) {
+        badge.className = 'live-badge';
+        badge.innerHTML = '<span class="live-dot"></span> LIVE';
+        setStatus('Connected — ratings sync in real time', '#7defa0');
+      } else {
+        badge.className = 'offline-badge';
+        badge.innerHTML = '⬤ Reconnecting…';
+        setStatus('Reconnecting…', '#ff8a8a');
+      }
+    });
+
+    ratingsRef.on('value', snapshot => {
+      const data = snapshot.val() || {};
+      for (let pi=0; pi<P; pi++) {
+        for (let ci=0; ci<N; ci++) {
+          const remote = (data[pi] && data[pi][ci] != null) ? data[pi][ci] : 0;
+          if (remote !== ratings[pi][ci]) {
+            ratings[pi][ci] = remote;
+            renderStars(pi, ci);
+            flashCell(pi, ci);
+          }
+        }
+        updateTotals(pi);
+      }
+      updateRankings();
+    });
+  } catch(e) {
+    setStatus('Firebase error: ' + e.message, '#ff8a8a');
+    document.getElementById('liveBadge').innerHTML = '⬤ Error';
+  }
+} else {
+  // Not configured — show offline mode clearly
+  const badge = document.getElementById('liveBadge');
+  badge.className = 'offline-badge';
+  badge.innerHTML = '⬤ Offline (Firebase not set up)';
+  setStatus('⚠ Configure Firebase to enable live sync', '#F4B942');
+  document.getElementById('setupBanner').classList.remove('hidden');
 }
 </script>
 </body>
